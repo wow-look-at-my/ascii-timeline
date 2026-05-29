@@ -217,6 +217,18 @@ func (t *Timeline) bounds() (start, end time.Time, ok bool) {
 	if !eProvided {
 		end = end.Add(pad)
 	}
+
+	// If today is within 2 weeks of the nearest actual event date but would
+	// fall outside the auto-derived window, stretch that edge to include it.
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	if !sProvided && !minT.IsZero() && today.Before(start) && minT.Sub(today) <= 14*day {
+		start = today.Add(-pad)
+	}
+	if !eProvided && !maxT.IsZero() && today.After(end) && today.Sub(maxT) <= 14*day {
+		end = today.Add(pad)
+	}
+
 	return start, end, true
 }
 
@@ -289,13 +301,17 @@ func (t *Timeline) drawToday(cv *canvas, rc renderCtx) {
 	col := colFor(today, rc)
 	const spec = "bold brightyellow"
 
-	// "today" label centered over the marker on the label row.
+	// "today" label centered over the marker on the label row. Clear the area
+	// first so any partially-overwritten tick label doesn't leave remnants.
 	const label = "today"
 	start := col - len(label)/2
 	if start < 0 {
 		start = 0
 	}
 	if start+len(label) <= rc.width {
+		for i := start; i <= start+len(label) && i < rc.width; i++ {
+			cv.set(i, 0, ' ', "")
+		}
 		cv.puts(start, 0, label, spec)
 	}
 
