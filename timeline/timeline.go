@@ -152,6 +152,7 @@ func (t *Timeline) Render(w io.Writer) error {
 	cv := newCanvas()
 	t.drawAxis(cv, rc)
 	t.drawEvents(cv, rc)
+	t.drawToday(cv, rc) // after events so vertical line fills all rows
 	out.WriteString(cv.render(t.NoColor))
 
 	_, err := io.WriteString(w, out.String())
@@ -272,6 +273,41 @@ func (t *Timeline) drawAxis(cv *canvas, rc renderCtx) {
 		cv.puts(col, labelRow, label, "dim")
 		for i := col; i <= col+n; i++ {
 			occupied[i] = true
+		}
+	}
+}
+
+// drawToday marks the current date on the axis when it falls within the
+// rendered range. It writes a prominent ▼ + "today" label and a vertical line
+// through all event rows so the marker is globally obvious.
+func (t *Timeline) drawToday(cv *canvas, rc renderCtx) {
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	if today.Before(rc.s) || today.After(rc.e) {
+		return
+	}
+	col := colFor(today, rc)
+	const spec = "bold brightyellow"
+
+	// "today" label centered over the marker on the label row.
+	const label = "today"
+	start := col - len(label)/2
+	if start < 0 {
+		start = 0
+	}
+	if start+len(label) <= rc.width {
+		cv.puts(start, 0, label, spec)
+	}
+
+	// ▼ on the axis row.
+	cv.set(col, 1, '▼', spec)
+
+	// Vertical line through event rows — drawn only into blank cells so event
+	// markers and labels remain readable.
+	for row := 2; row < len(cv.rows); row++ {
+		r := cv.rows[row]
+		if col >= len(r) || r[col].r == ' ' {
+			cv.set(col, row, '│', spec)
 		}
 	}
 }
