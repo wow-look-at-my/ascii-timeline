@@ -1,6 +1,8 @@
 package timeline
 
 import (
+	"github.com/wow-look-at-my/testify/assert"
+	"github.com/wow-look-at-my/testify/require"
 	"testing"
 	"time"
 )
@@ -8,9 +10,8 @@ import (
 func mustDate(t *testing.T, s string) time.Time {
 	t.Helper()
 	d, err := parseDate(s)
-	if err != nil {
-		t.Fatalf("parseDate(%q): %v", s, err)
-	}
+	require.Nil(t, err)
+
 	return d
 }
 
@@ -24,21 +25,16 @@ func TestNiceTicksWithinRangeAndSorted(t *testing.T) {
 	for _, sp := range spans {
 		s, e := mustDate(t, sp[0]), mustDate(t, sp[1])
 		ticks := niceTicks(s, e, 6)
-		if len(ticks) == 0 {
-			t.Errorf("%v..%v: got no ticks", sp[0], sp[1])
-			continue
-		}
-		if len(ticks) > 8 {
-			t.Errorf("%v..%v: got %d ticks, expected a handful", sp[0], sp[1], len(ticks))
-		}
+		assert.NotEqual(t, 0, len(ticks))
+
+		assert.LessOrEqual(t, len(ticks), 8)
+
 		prev := time.Time{}
 		for _, tk := range ticks {
-			if tk.Before(s) || tk.After(e) {
-				t.Errorf("%v..%v: tick %v out of range", sp[0], sp[1], tk)
-			}
-			if !prev.IsZero() && !tk.After(prev) {
-				t.Errorf("%v..%v: ticks not strictly increasing at %v", sp[0], sp[1], tk)
-			}
+			assert.False(t, tk.Before(s) || tk.After(e))
+
+			assert.False(t, !prev.IsZero() && !tk.After(prev))
+
 			prev = tk
 		}
 	}
@@ -46,9 +42,8 @@ func TestNiceTicksWithinRangeAndSorted(t *testing.T) {
 
 func TestNiceTicksEmptyWhenNoSpan(t *testing.T) {
 	d := mustDate(t, "2024-01-01")
-	if ticks := niceTicks(d, d, 6); ticks != nil {
-		t.Errorf("expected nil ticks for zero span, got %v", ticks)
-	}
+	assert.Empty(t, niceTicks(d, d, 6))
+
 }
 
 func TestTickFormat(t *testing.T) {
@@ -62,8 +57,7 @@ func TestTickFormat(t *testing.T) {
 	}
 	for _, c := range cases {
 		got := tickFormat(mustDate(t, c.start), mustDate(t, c.end))
-		if got != c.want {
-			t.Errorf("tickFormat(%s,%s) = %q, want %q", c.start, c.end, got, c.want)
-		}
+		assert.Equal(t, c.want, got)
+
 	}
 }

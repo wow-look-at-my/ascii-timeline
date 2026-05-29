@@ -1,41 +1,36 @@
 package timeline
 
 import (
+	"github.com/wow-look-at-my/testify/assert"
+	"github.com/wow-look-at-my/testify/require"
 	"strings"
 	"testing"
 )
 
 func TestParseDefaultsHeader(t *testing.T) {
 	tl, err := ParseBytes([]byte(`{"events":[{"label":"x","date":"2024-01-01"}]}`))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	if tl.Header != DefaultHeader {
-		t.Errorf("header = %q, want default %q", tl.Header, DefaultHeader)
-	}
-	if len(tl.Events) != 1 || tl.Events[0].Date.IsZero() {
-		t.Fatalf("expected one point event, got %+v", tl.Events)
-	}
+	require.Nil(t, err)
+
+	assert.Equal(t, DefaultHeader, tl.Header)
+
+	require.False(t, len(tl.Events) != 1 || tl.Events[0].Date.IsZero())
+
 }
 
 func TestParseExplicitEmptyHeader(t *testing.T) {
 	tl, err := ParseBytes([]byte(`{"header":"","events":[{"label":"x","date":"2024"}]}`))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	if tl.Header != "" {
-		t.Errorf("explicit empty header should suppress default, got %q", tl.Header)
-	}
+	require.Nil(t, err)
+
+	assert.Equal(t, "", tl.Header)
+
 }
 
 func TestParseCustomHeader(t *testing.T) {
 	tl, err := ParseBytes([]byte(`{"header":"# Hi","events":[{"label":"x","date":"2024"}]}`))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	if tl.Header != "# Hi" {
-		t.Errorf("header = %q, want %q", tl.Header, "# Hi")
-	}
+	require.Nil(t, err)
+
+	assert.Equal(t, "# Hi", tl.Header)
+
 }
 
 func TestParseDateFormats(t *testing.T) {
@@ -51,20 +46,17 @@ func TestParseDateFormats(t *testing.T) {
 	}
 	for in, want := range cases {
 		got, err := parseDate(in)
-		if err != nil {
-			t.Errorf("parseDate(%q): %v", in, err)
-			continue
-		}
-		if got.Year() != want.y || int(got.Month()) != want.m || got.Day() != want.d {
-			t.Errorf("parseDate(%q) = %v, want %04d-%02d-%02d", in, got, want.y, want.m, want.d)
-		}
+		assert.Nil(t, err)
+
+		assert.False(t, got.Year() != want.y || int(got.Month()) != want.m || got.Day() != want.d)
+
 	}
 }
 
 func TestParseBadDate(t *testing.T) {
-	if _, err := parseDate("not-a-date"); err == nil {
-		t.Error("expected error for unparseable date")
-	}
+	_, err := parseDate("not-a-date")
+	assert.NotNil(t, err)
+
 }
 
 func TestParseEventValidation(t *testing.T) {
@@ -77,26 +69,23 @@ func TestParseEventValidation(t *testing.T) {
 		{"bad json", `{`},
 	}
 	for _, c := range cases {
-		if _, err := ParseBytes([]byte(c.json)); err == nil {
-			t.Errorf("%s: expected error, got nil", c.name)
-		}
+		_, err := ParseBytes([]byte(c.json))
+		assert.NotNil(t, err)
+
 	}
 }
 
 func TestParseUnknownFieldsTolerated(t *testing.T) {
 	// LLMs may add extra keys; we should not choke on them.
 	tl, err := ParseBytes([]byte(`{"title":"ignored","events":[{"label":"x","date":"2024","note":"extra"}]}`))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	if len(tl.Events) != 1 {
-		t.Fatalf("want 1 event, got %d", len(tl.Events))
-	}
+	require.Nil(t, err)
+
+	require.Equal(t, 1, len(tl.Events))
+
 }
 
 func TestParseRejectsBadColorlessNothing(t *testing.T) {
 	_, err := ParseBytes([]byte(`{"events":[{"label":"only start","start":"2024-01-01"}]}`))
-	if err == nil || !strings.Contains(err.Error(), "start") {
-		t.Errorf("expected a 'needs date or start+end' style error, got %v", err)
-	}
+	assert.False(t, err == nil || !strings.Contains(err.Error(), "start"))
+
 }

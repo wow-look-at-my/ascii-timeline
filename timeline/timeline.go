@@ -77,9 +77,10 @@ func New() *Timeline {
 
 // renderCtx carries the resolved bounds and formats through the draw helpers.
 type renderCtx struct {
-	s, e  time.Time
-	width int
-	df    string
+	s, e   time.Time
+	width  int
+	tickF  string // axis tick label layout
+	eventF string // per-event date label layout
 }
 
 // palette supplies distinct colors to events that don't specify one.
@@ -137,7 +138,13 @@ func (t *Timeline) Render(w io.Writer) error {
 		out.WriteByte('\n')
 	}
 
-	rc := renderCtx{s: s, e: e, width: width, df: tickFormat(s, e)}
+	rc := renderCtx{
+		s:      s,
+		e:      e,
+		width:  width,
+		tickF:  tickFormat(s, e),
+		eventF: eventDateFormat(s, e),
+	}
 
 	out.WriteString(t.style(formatRange(s, e), "dim"))
 	out.WriteByte('\n')
@@ -225,7 +232,9 @@ func colFor(d time.Time, rc renderCtx) int {
 	return c
 }
 
-// drawAxis renders the tick labels (row 0) and the axis line (row 1).
+// drawAxis renders the tick labels (row 0) and the axis line (row 1). Labels
+// are left-aligned at their tick column; the exact start/end dates live in the
+// caption above, so the axis stays uncluttered.
 func (t *Timeline) drawAxis(cv *canvas, rc renderCtx) {
 	const labelRow, axisRow = 0, 1
 
@@ -236,53 +245,34 @@ func (t *Timeline) drawAxis(cv *canvas, rc renderCtx) {
 	cv.set(rc.width-1, axisRow, '┤', "dim")
 
 	occupied := make([]bool, rc.width)
-	mark := func(start, n int) {
-		for i := start - 1; i <= start+n; i++ {
-			if i >= 0 && i < rc.width {
-				occupied[i] = true
-			}
-		}
-	}
-	free := func(start, n int) bool {
-		if start < 0 || start+n > rc.width {
+	// fits reports whether a label of n runes left-aligned at col fits without
+	// running off the axis or colliding with an earlier label (plus a gap).
+	fits := func(col, n int) bool {
+		if col < 0 || col+n+1 > rc.width {
 			return false
 		}
-		for i := start; i < start+n; i++ {
+		for i := col; i < col+n+1; i++ {
 			if occupied[i] {
 				return false
 			}
 		}
 		return true
 	}
-	// align: -1 left at col, 0 centered on col, 1 right-aligned ending at col.
-	put := func(col int, text string, align int) {
-		r := []rune(text)
-		n := len(r)
-		start := col
-		switch align {
-		case 0:
-			start = col - n/2
-		case 1:
-			start = col - n + 1
-		}
-		if !free(start, n) {
-			return
-		}
-		cv.puts(start, labelRow, text, "dim")
-		mark(start, n)
-	}
-
-	// Always show the exact start (left) and end (right) dates.
-	put(0, rc.s.Format(rc.df), -1)
-	put(rc.width-1, rc.e.Format(rc.df), 1)
 
 	for _, tk := range niceTicks(rc.s, rc.e, 6) {
 		col := colFor(tk, rc)
-		if col <= 0 || col >= rc.width-1 {
+		if col > 0 && col < rc.width-1 {
+			cv.set(col, axisRow, '┴', "dim")
+		}
+		label := tk.Format(rc.tickF)
+		n := len([]rune(label))
+		if !fits(col, n) {
 			continue
 		}
-		cv.set(col, axisRow, '┴', "dim")
-		put(col, tk.Format(rc.df), 0)
+		cv.puts(col, labelRow, label, "dim")
+		for i := col; i <= col+n; i++ {
+			occupied[i] = true
+		}
 	}
 }
 
@@ -330,9 +320,9 @@ func (t *Timeline) drawEventLabel(cv *canvas, row, col int, ev Event, spec strin
 	}
 	var dateStr string
 	if ev.isDuration() {
-		dateStr = "(" + ev.Start.Format(rc.df) + " – " + ev.End.Format(rc.df) + ")"
+		dateStr = "(" + ev.Start.Format(rc.eventF) + " – " + ev.End.Format(rc.eventF) + ")"
 	} else {
-		dateStr = "(" + ev.Date.Format(rc.df) + ")"
+		dateStr = "(" + ev.Date.Format(rc.eventF) + ")"
 	}
 	x = cv.puts(x, row, dateStr, "dim")
 	if ev.Description != "" {

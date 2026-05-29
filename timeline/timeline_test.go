@@ -1,6 +1,8 @@
 package timeline
 
 import (
+	"github.com/wow-look-at-my/testify/assert"
+	"github.com/wow-look-at-my/testify/require"
 	"strings"
 	"testing"
 	"time"
@@ -36,41 +38,33 @@ func TestColFor(t *testing.T) {
 		e:     mustDateT("2024-01-11"),
 		width: 11,
 	}
-	if c := colFor(rc.s, rc); c != 0 {
-		t.Errorf("start column = %d, want 0", c)
-	}
-	if c := colFor(rc.e, rc); c != rc.width-1 {
-		t.Errorf("end column = %d, want %d", c, rc.width-1)
-	}
-	if c := colFor(mustDateT("2024-01-06"), rc); c != 5 {
-		t.Errorf("midpoint column = %d, want 5", c)
-	}
+	assert.Equal(t, 0, colFor(rc.s, rc))
+	assert.Equal(t, rc.width-1, colFor(rc.e, rc))
+	assert.Equal(t, 5, colFor(mustDateT("2024-01-06"), rc))
+
 	// Out-of-range times clamp into the axis.
-	if c := colFor(mustDateT("2023-01-01"), rc); c != 0 {
-		t.Errorf("before-start column = %d, want 0", c)
-	}
-	if c := colFor(mustDateT("2025-01-01"), rc); c != rc.width-1 {
-		t.Errorf("after-end column = %d, want %d", c, rc.width-1)
-	}
+	assert.Equal(t, 0, colFor(mustDateT("2023-01-01"), rc))
+	assert.Equal(t, rc.width-1, colFor(mustDateT("2025-01-01"), rc))
 }
 
 func TestRenderStructure(t *testing.T) {
 	out := sampleTimeline().String()
 
 	for _, want := range []string{
-		"# Demo",      // header
-		"A short",     // description
-		"→",           // range caption arrow
-		"Jan 2024",    // start tick label (Jan 2006 format)
-		"Dec 2024",    // end tick label
-		"├", "┤", "─", // axis
+		"# Demo",       // header
+		"A short",      // description
+		"→",            // range caption arrow
+		"Jan 2024",     // a left-aligned axis tick label
+		"Nov 2024",     // a later axis tick label
+		"Dec 31, 2024", // exact end date shown in the caption
+		"Jan 8, 2024",  // event date keeps the day (finer than ticks)
+		"├", "┤", "─",  // axis
 		"●", // point marker
 		"█", // duration bar
 		"Kickoff", "Build", "GA launch",
 	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("render output missing %q\n---\n%s", want, out)
-		}
+		assert.Contains(t, out, want)
+
 	}
 }
 
@@ -79,35 +73,30 @@ func TestRenderChronologicalOrder(t *testing.T) {
 	ki := strings.Index(out, "Kickoff")
 	bi := strings.Index(out, "Build")
 	gi := strings.Index(out, "GA launch")
-	if !(ki < bi && bi < gi) {
-		t.Errorf("events not in chronological order: Kickoff@%d Build@%d GA@%d", ki, bi, gi)
-	}
+	assert.True(t, (ki < bi && bi < gi))
+
 }
 
 func TestNoColorHasNoEscapes(t *testing.T) {
-	if strings.Contains(sampleTimeline().String(), "\x1b") {
-		t.Error("NoColor output should contain no ANSI escapes")
-	}
+	assert.NotContains(t, sampleTimeline().String(), "\x1b")
+
 }
 
 func TestColorHasEscapes(t *testing.T) {
 	tl := sampleTimeline()
 	tl.NoColor = false
-	if !strings.Contains(tl.String(), "\x1b[") {
-		t.Error("colored output should contain ANSI escapes")
-	}
+	assert.Contains(t, tl.String(), "\x1b[")
+
 }
 
 func TestEmptyTimelineIsGraceful(t *testing.T) {
 	tl := New()
 	tl.NoColor = true
 	out := tl.String()
-	if !strings.Contains(out, DefaultHeader) {
-		t.Errorf("empty timeline should still show default header, got:\n%s", out)
-	}
-	if !strings.Contains(out, "(no events)") {
-		t.Errorf("empty timeline should note it is empty, got:\n%s", out)
-	}
+	assert.Contains(t, out, DefaultHeader)
+
+	assert.Contains(t, out, "(no events)")
+
 }
 
 func TestBoundsDerivedFromEvents(t *testing.T) {
@@ -118,14 +107,11 @@ func TestBoundsDerivedFromEvents(t *testing.T) {
 		{Label: "b", Date: mustDateT("2024-08-01")},
 	}
 	s, e, ok := tl.bounds()
-	if !ok {
-		t.Fatal("bounds not ok")
-	}
+	require.True(t, ok)
+
 	// Derived bounds are padded outward, so they straddle the events.
-	if !s.Before(mustDateT("2024-02-01")) {
-		t.Errorf("derived start %v should be padded before first event", s)
-	}
-	if !e.After(mustDateT("2024-08-01")) {
-		t.Errorf("derived end %v should be padded after last event", e)
-	}
+	assert.True(t, s.Before(mustDateT("2024-02-01")))
+
+	assert.True(t, e.After(mustDateT("2024-08-01")))
+
 }

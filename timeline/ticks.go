@@ -125,8 +125,8 @@ func advance(t time.Time, s tickStep) time.Time {
 	return t
 }
 
-// tickFormat picks a compact label layout appropriate for the span. It is used
-// for both axis tick labels and per-event date labels so they stay consistent.
+// tickFormat picks a compact label layout for the axis ticks, appropriate for
+// the span. Ticks act as gridlines, so the layout stays coarse.
 func tickFormat(start, end time.Time) string {
 	days := end.Sub(start).Hours() / 24
 	switch {
@@ -138,5 +138,22 @@ func tickFormat(start, end time.Time) string {
 		return "Jan 2006"
 	default:
 		return "2006"
+	}
+}
+
+// eventDateFormat picks the per-event date layout. It is generally one notch
+// more precise than the axis ticks so each event keeps its day (and time, for
+// short spans) while still reading cleanly.
+func eventDateFormat(start, end time.Time) string {
+	days := end.Sub(start).Hours() / 24
+	switch {
+	case days <= 2:
+		return "Jan 2 15:04"
+	case days > 1095:
+		return "Jan 2006"
+	case start.Year() != end.Year() || days > 300:
+		return "Jan 2, 2006"
+	default:
+		return "Jan 2"
 	}
 }
