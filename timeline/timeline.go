@@ -301,14 +301,18 @@ func (t *Timeline) drawToday(cv *canvas, rc renderCtx) {
 	col := colFor(today, rc)
 	const spec = "bold brightyellow"
 
-	// "today" label centered over the marker on the label row. Clear the area
-	// first so any partially-overwritten tick label doesn't leave remnants.
+	// "today" label centered over the marker on the label row. Clamp both
+	// edges so it always fits, then clear the area first to eliminate any
+	// remnants from a partially-overwritten tick label.
 	const label = "today"
 	start := col - len(label)/2
 	if start < 0 {
 		start = 0
 	}
-	if start+len(label) <= rc.width {
+	if start+len(label) > rc.width {
+		start = rc.width - len(label)
+	}
+	if start >= 0 {
 		for i := start; i <= start+len(label) && i < rc.width; i++ {
 			cv.set(i, 0, ' ', "")
 		}
