@@ -9,24 +9,27 @@ events as a bar (`█`) spanning their range. Output uses Unicode box-drawing
 characters and ANSI color by default. Everything is optional.
 
 ```text
-# Project Apollo — 2024 Roadmap
-High-level delivery plan for the Apollo platform. Point markers are
-milestones; bars are work phases.
+# Project Apollo
+High-level delivery plan. Point markers are milestones; bars are work phases.
 
-Jan 1, 2024  →  Dec 31, 2024   (12 months)
-Jan 2024    Mar 2024    May 2024   Jul 2024    Sep 2024    Nov 2024
-├───────────┴───────────┴──────────┴───────────┴───────────┴───────────┤
- ● Kickoff (Jan 8, 2024)
-   ████████████ Design phase (Jan 15, 2024 – Mar 15, 2024) — research and specs
-               ● Design review (Mar 18, 2024)
-               █████████████████████████████████ Build phase (Mar 20, 2024 – Aug 30, 2024) — core implementation
-                                                 ● Beta release (Sep 10, 2024)
-                                                 ██████████████ Hardening (Sep 10, 2024 – Nov 15, 2024)
-                                                                 ● GA launch (Dec 2, 2024) — general availability
+Dec 30, 2025  →  Dec 30, 2026   (12 months)
+Jan 2026    Mar 2026    May today    Jul 2026    Sep 2026    Nov 2026
+├───────────┴───────────┴────▼──────┴───────────┴───────────┴──────────┤
+ ● Kickoff (Jan 4, 2026)
+      ██████████ Design phase│(Jan 29, 2026 – Mar 15, 2026) — research and specs
+               ● Design review (Mar 18, 2026)
+                ██████████████████████████ Build phase (Mar 20, 2026 – Jul 28, 2026) — core implementation
+                             │                 ● Beta release (Aug 27, 2026)
+                             │                 ████████████ Hardening (Aug 27, 2026 – Oct 26, 2026)
+                             │                                   ● GA launch (Nov 30, 2026) — general availability
 ```
 
-(In a real terminal the header is bold, the caption and axis are dim, and each
-event is colored.)
+In a real terminal: the header is bold; the caption and axis are dim; each
+event uses its palette color; the current date appears as a bold bright-yellow
+`▼` on the axis, `today` label on the row above, and a vertical `│` line running
+through the event rows below — making it easy to see what's past, ongoing, and
+upcoming at a glance. The `example` subcommand generates dates relative to the
+current date so today always falls mid-timeline.
 
 ## Build
 

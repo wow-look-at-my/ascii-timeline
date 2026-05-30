@@ -115,3 +115,91 @@ func TestBoundsDerivedFromEvents(t *testing.T) {
 	assert.True(t, e.After(mustDateT("2024-08-01")))
 
 }
+
+// todayAt returns a midnight time at the given day offset from now.
+func todayAt(offset int) time.Time {
+	now := time.Now()
+	d := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	return d.AddDate(0, 0, offset)
+}
+
+func TestTodayMarkerAppearsWhenInRange(t *testing.T) {
+	tl := New()
+	tl.NoColor = true
+	tl.Start = todayAt(-30)
+	tl.End = todayAt(30)
+	tl.Events = []Event{
+		{Label: "past",   Date: todayAt(-20)},
+		{Label: "future", Date: todayAt(20)},
+	}
+	out := tl.String()
+	assert.Contains(t, out, "today")
+	assert.Contains(t, out, "▼")
+	assert.Contains(t, out, "│") // vertical line through event rows
+}
+
+func TestTodayMarkerAbsentWhenOutOfRange(t *testing.T) {
+	tl := New()
+	tl.NoColor = true
+	tl.Start = mustDateT("2000-01-01")
+	tl.End = mustDateT("2000-12-31")
+	tl.Events = []Event{{Label: "e", Date: mustDateT("2000-06-01")}}
+	out := tl.String()
+	assert.NotContains(t, out, "today")
+	assert.NotContains(t, out, "▼")
+}
+
+func TestTodayMarkerLabelNoRemnants(t *testing.T) {
+	// Today is near the left edge so "today" can overlap a tick label.
+	// Verify no digit from the overwritten tick bleeds through.
+	tl := New()
+	tl.NoColor = true
+	tl.Events = []Event{{Label: "e", Date: todayAt(7)}}
+	out := tl.String()
+	assert.Contains(t, out, "today")
+	for _, d := range "0123456789" {
+		assert.NotContains(t, out, "today"+string(d))
+	}
+}
+
+func TestBoundsExtendedForTodayWithinTwoWeeks(t *testing.T) {
+	// Event ended 7 days ago — end should stretch to include today.
+	tl := New()
+	tl.Events = []Event{{Label: "e", Date: todayAt(-7)}}
+	_, e, ok := tl.bounds()
+	require.True(t, ok)
+	assert.False(t, e.Before(todayAt(0)), "end should reach today when event is within 2 weeks")
+	assert.Contains(t, tl.String(), "today")
+
+	// Event starts 7 days from now — start should stretch back to today.
+	tl2 := New()
+	tl2.Events = []Event{{Label: "e", Date: todayAt(7)}}
+	s2, _, ok2 := tl2.bounds()
+	require.True(t, ok2)
+	assert.False(t, todayAt(0).Before(s2), "start should reach today when event is within 2 weeks")
+	assert.Contains(t, tl2.String(), "today")
+}
+
+func TestBoundsNotExtendedBeyondTwoWeeks(t *testing.T) {
+	// Event ended 21 days ago — beyond the 2-week window; no today marker.
+	tl := New()
+	tl.NoColor = true
+	tl.Events = []Event{{Label: "e", Date: todayAt(-21)}}
+	assert.NotContains(t, tl.String(), "today")
+
+	// Event starts 21 days from now.
+	tl2 := New()
+	tl2.NoColor = true
+	tl2.Events = []Event{{Label: "e", Date: todayAt(21)}}
+	assert.NotContains(t, tl2.String(), "today")
+}
+
+func TestBoundsNotExtendedWhenExplicit(t *testing.T) {
+	// Explicit start/end that exclude today should never be stretched.
+	tl := New()
+	tl.NoColor = true
+	tl.Start = todayAt(5)
+	tl.End = todayAt(30)
+	tl.Events = []Event{{Label: "e", Date: todayAt(10)}}
+	assert.NotContains(t, tl.String(), "today")
+}
