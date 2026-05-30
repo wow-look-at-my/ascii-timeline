@@ -4,8 +4,9 @@ on:
   push:
 
 permissions:
-  id-token: write
-  contents: read
+  id-token: write # OIDC: secret server + buildhost publish
+  actions: read # buildhost-publish lists + downloads the build artifact
+  contents: write # dependency-graph submission (and releases)
 
 jobs:
   test:
