@@ -13,11 +13,10 @@ text from a JSON document. It is both a CLI and a reusable Go library.
 main.go              # entry point; calls cmd.Execute()
 cmd/                 # cobra CLI (one command per file, self-registering)
   root.go            # root command: reads JSON (file/arg/stdin) and renders
-  example.go         # `example` subcommand; embeds example.json
-  example.json       # sample document (embedded via go:embed, also the demo)
+  example.go         # `example` subcommand; generates dynamic sample JSON
   version.go         # `version` subcommand
 timeline/            # rendering library (no CLI deps)
-  timeline.go        # Timeline/Event types, New, Render, bounds, layout
+  timeline.go        # Timeline/Event types, New, Render, bounds, layout, drawToday
   parse.go           # JSON + flexible date parsing (Parse/ParseBytes)
   ticks.go           # axis tick selection and date label formats
   canvas.go          # styled rune grid with ANSI run-length output
@@ -56,6 +55,9 @@ style so they aren't re-rewritten.
   `--no-color` / `NO_COLOR`) drops all escapes.
 - Everything is optional; `header` defaults to `# Timeline` (a `*string` in the
   JSON layer distinguishes "omitted" from an explicit empty `""`).
+- Today marker: `drawToday` runs after `drawEvents`; it places a bold-brightyellow
+  `▼` on the axis row and "today" on the label row, then draws `│` down through
+  all blank cells in the today column. Only fires when today is within `[rc.s, rc.e]`.
 
 ## Docs
 
