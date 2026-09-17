@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/spf13/cobra v1.8.1
-	github.com/wow-look-at-my/testify v0.0.0-20260217010200-5fd2c08e3abb
+	github.com/stretchr/testify v1.12.1
 )
 
 require (

@@ -30,8 +30,8 @@ type jsonDoc struct {
 	Events      []jsonEvent `json:"events"`
 }
 
-// dateLayouts are tried in order; the first that parses wins. The list favors
-// unambiguous ISO-style layouts before locale-specific ones.
+// dateLayouts are tried in order; the earliest that parses wins. The list
+// favors unambiguous ISO-style layouts before locale-specific ones.
 var dateLayouts = []string{
 	time.RFC3339,
 	"2006-01-02T15:04:05",
