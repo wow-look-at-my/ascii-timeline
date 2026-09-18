@@ -64,8 +64,7 @@ func (c *canvas) render(noColor bool) string {
 			cl := row[i]
 			spec := cl.spec
 			if cl.r == ' ' {
-				// Never style blanks: avoids stray background runs and keeps
-				// the escape sequences minimal.
+				// Styling a blank leaves a stray background run.
 				spec = ""
 			}
 			if !noColor && spec != cur {

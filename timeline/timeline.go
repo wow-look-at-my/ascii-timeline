@@ -35,8 +35,7 @@ type Event struct {
 	Start time.Time // duration event start
 	End   time.Time // duration event end
 
-	// Color is an optional style spec (e.g. "red", "bold cyan"). When empty a
-	// color is assigned automatically from a palette.
+	// A style spec such as "red" or "bold cyan". Empty takes a palette color.
 	Color string
 }
 

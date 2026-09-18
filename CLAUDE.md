@@ -37,7 +37,8 @@ go-toolchain
 
 Tests use `github.com/stretchr/testify` (`assert`/`require`). The
 `github.com/wow-look-at-my/testify` fork this repo once imported has been
-deleted, and go-toolchain's vet now migrates any remaining import of it.
+deleted, and go-toolchain's vet now migrates any import of it back to
+upstream.
 
 ## Design notes
 

@@ -129,7 +129,7 @@ func TestTodayMarkerAppearsWhenInRange(t *testing.T) {
 	tl.Start = todayAt(-30)
 	tl.End = todayAt(30)
 	tl.Events = []Event{
-		{Label: "past",   Date: todayAt(-20)},
+		{Label: "past", Date: todayAt(-20)},
 		{Label: "future", Date: todayAt(20)},
 	}
 	out := tl.String()
