@@ -1,8 +1,8 @@
 package timeline
 
 import (
-	"github.com/wow-look-at-my/testify/assert"
-	"github.com/wow-look-at-my/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
@@ -129,7 +129,7 @@ func TestTodayMarkerAppearsWhenInRange(t *testing.T) {
 	tl.Start = todayAt(-30)
 	tl.End = todayAt(30)
 	tl.Events = []Event{
-		{Label: "past",   Date: todayAt(-20)},
+		{Label: "past", Date: todayAt(-20)},
 		{Label: "future", Date: todayAt(20)},
 	}
 	out := tl.String()

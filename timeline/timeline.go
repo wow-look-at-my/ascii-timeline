@@ -35,8 +35,7 @@ type Event struct {
 	Start time.Time // duration event start
 	End   time.Time // duration event end
 
-	// Color is an optional style spec (e.g. "red", "bold cyan"). When empty a
-	// color is assigned automatically from a palette.
+	// A style spec such as "red" or "bold cyan". Empty takes a palette color.
 	Color string
 }
 
@@ -387,8 +386,8 @@ func (t *Timeline) drawEventLabel(cv *canvas, row, col int, ev Event, spec strin
 	}
 }
 
-// formatRange produces the dim caption above the axis, e.g.
-// "Jan 1, 2024  →  Dec 31, 2024   (12 months)".
+// formatRange produces the dim caption above the axis: the two dates and the
+// span between them.
 func formatRange(s, e time.Time) string {
 	f := "Jan 2, 2006"
 	if e.Sub(s) < 48*time.Hour {

@@ -35,9 +35,10 @@ go-toolchain
 ./build/ascii-timeline example | ./build/ascii-timeline   # quick visual check
 ```
 
-Note: the toolchain's auto-fixer rewrites test assertions into
-`github.com/wow-look-at-my/testify` (`assert`/`require`). Keep tests in that
-style so they aren't re-rewritten.
+Tests use `github.com/stretchr/testify` (`assert`/`require`). The
+`github.com/wow-look-at-my/testify` fork this repo once imported has been
+deleted, and go-toolchain's vet now migrates any import of it back to
+upstream.
 
 ## Design notes
 
