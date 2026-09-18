@@ -8,7 +8,8 @@ type cell struct {
 	spec string
 }
 
-// canvas is a simple grid of styled cells that grows on demand.
+// canvas is a simple grid of styled cells that grows on demand. The origin
+// (0,0) is the top-left; x is the column, y is the row.
 type canvas struct {
 	rows [][]cell
 }
@@ -38,7 +39,7 @@ func (c *canvas) set(x, y int, r rune, spec string) {
 }
 
 // puts writes a string starting at (x, y) and returns the column just past
-// the last rune written. Each rune occupies a single column.
+// the last rune written. Each rune occupies one column.
 func (c *canvas) puts(x, y int, s, spec string) int {
 	col := x
 	for _, r := range s {

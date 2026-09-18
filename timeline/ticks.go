@@ -22,7 +22,7 @@ type tickStep struct {
 const day = 24 * time.Hour
 
 // tickSteps lists candidate spacings from finest to coarsest. niceTicks picks
-// the finest a single that yields at most maxTicks ticks across the span.
+// the finest one that yields at most maxTicks ticks across the span.
 var tickSteps = []tickStep{
 	{unitHour, 1, time.Hour},
 	{unitHour, 2, 2 * time.Hour},
@@ -110,7 +110,7 @@ func alignUp(t time.Time, s tickStep) time.Time {
 	return t
 }
 
-// advance moves t forward by a single step.
+// advance moves t forward by one step.
 func advance(t time.Time, s tickStep) time.Time {
 	switch s.unit {
 	case unitHour:
@@ -141,9 +141,9 @@ func tickFormat(start, end time.Time) string {
 	}
 }
 
-// eventDateFormat picks the per-event date layout. It is generally a single
-// notch more precise than the axis ticks so each event keeps its day (and
-// time, for short spans) while still reading cleanly.
+// eventDateFormat picks the per-event date layout. It is generally one notch
+// more precise than the axis ticks so each event keeps its day (and time, for
+// short spans) while still reading cleanly.
 func eventDateFormat(start, end time.Time) string {
 	days := end.Sub(start).Hours() / 24
 	switch {

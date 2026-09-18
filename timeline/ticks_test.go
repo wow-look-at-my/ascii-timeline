@@ -17,10 +17,10 @@ func mustDate(t *testing.T, s string) time.Time {
 
 func TestNiceTicksWithinRangeAndSorted(t *testing.T) {
 	spans := [][2]string{
-		{"2024-01-01", "2024-12-31"},
+		{"2024-01-01", "2024-12-31"}, // ~1 year
 		{"2024-01-01", "2024-01-04"}, // a few days
 		{"2020-01-01", "2030-01-01"}, // a decade
-		{"2024-06-01", "2024-06-02"}, // a
+		{"2024-06-01", "2024-06-02"}, // one day
 	}
 	for _, sp := range spans {
 		s, e := mustDate(t, sp[0]), mustDate(t, sp[1])

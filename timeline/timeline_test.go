@@ -163,6 +163,7 @@ func TestTodayMarkerLabelNoRemnants(t *testing.T) {
 }
 
 func TestBoundsExtendedForTodayWithinTwoWeeks(t *testing.T) {
+	// Event ended 7 days ago — end should stretch to include today.
 	tl := New()
 	tl.Events = []Event{{Label: "e", Date: todayAt(-7)}}
 	_, e, ok := tl.bounds()
@@ -170,6 +171,7 @@ func TestBoundsExtendedForTodayWithinTwoWeeks(t *testing.T) {
 	assert.False(t, e.Before(todayAt(0)), "end should reach today when event is within 2 weeks")
 	assert.Contains(t, tl.String(), "today")
 
+	// Event starts 7 days from now — start should stretch back to today.
 	tl2 := New()
 	tl2.Events = []Event{{Label: "e", Date: todayAt(7)}}
 	s2, _, ok2 := tl2.bounds()
@@ -179,11 +181,13 @@ func TestBoundsExtendedForTodayWithinTwoWeeks(t *testing.T) {
 }
 
 func TestBoundsNotExtendedBeyondTwoWeeks(t *testing.T) {
+	// Event ended 21 days ago — beyond the 2-week window; no today marker.
 	tl := New()
 	tl.NoColor = true
 	tl.Events = []Event{{Label: "e", Date: todayAt(-21)}}
 	assert.NotContains(t, tl.String(), "today")
 
+	// Event starts 21 days from now.
 	tl2 := New()
 	tl2.NoColor = true
 	tl2.Events = []Event{{Label: "e", Date: todayAt(21)}}

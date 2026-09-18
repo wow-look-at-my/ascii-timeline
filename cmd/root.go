@@ -83,6 +83,7 @@ straight in:  ascii-timeline example | ascii-timeline`,
 	},
 }
 
+// Execute runs the root command and exits non-zero on error.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)

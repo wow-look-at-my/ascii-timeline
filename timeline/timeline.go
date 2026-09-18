@@ -7,7 +7,7 @@
 // ANSI color by default; set NoColor to emit plain text.
 //
 // Timelines are usually built from JSON (see Parse) so an LLM or a human can
-// describe a single declaratively, but the struct can also be assembled directly.
+// describe one declaratively, but the struct can also be assembled directly.
 package timeline
 
 import (
@@ -62,8 +62,8 @@ func (e Event) endAt() time.Time {
 type Timeline struct {
 	Header      string
 	Description string
-	Start       time.Time // left edge; derived from events when
-	End         time.Time // right edge; derived from events when
+	Start       time.Time // left edge; derived from events when zero
+	End         time.Time // right edge; derived from events when zero
 	Width       int       // axis width in columns
 	Events      []Event
 	NoColor     bool
@@ -82,6 +82,7 @@ type renderCtx struct {
 	eventF string // per-event date label layout
 }
 
+// palette supplies distinct colors to events that don't specify one.
 var palette = []string{
 	"cyan", "green", "yellow", "magenta", "blue", "red",
 	"brightcyan", "brightgreen", "brightyellow", "brightmagenta",
@@ -216,6 +217,8 @@ func (t *Timeline) bounds() (start, end time.Time, ok bool) {
 		end = end.Add(pad)
 	}
 
+	// If today is within 2 weeks of the nearest actual event date but would
+	// fall outside the auto-derived window, stretch that edge to include it.
 	now := time.Now()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	if !sProvided && !minT.IsZero() && today.Before(start) && minT.Sub(today) <= 14*day {
@@ -228,6 +231,7 @@ func (t *Timeline) bounds() (start, end time.Time, ok bool) {
 	return start, end, true
 }
 
+// colFor maps a time to a column in [0, width-1].
 func colFor(d time.Time, rc renderCtx) int {
 	frac := float64(d.Sub(rc.s)) / float64(rc.e.Sub(rc.s))
 	c := int(frac*float64(rc.width-1) + 0.5)
@@ -240,8 +244,9 @@ func colFor(d time.Time, rc renderCtx) int {
 	return c
 }
 
-// Labels are left-aligned at their tick column; the exact start/end dates live
-// in the caption above, so the axis stays uncluttered.
+// drawAxis renders the tick labels (row 0) and the axis line (row 1). Labels
+// are left-aligned at their tick column; the exact start/end dates live in the
+// caption above, so the axis stays uncluttered.
 func (t *Timeline) drawAxis(cv *canvas, rc renderCtx) {
 	const labelRow, axisRow = 0, 1
 
@@ -296,8 +301,8 @@ func (t *Timeline) drawToday(cv *canvas, rc renderCtx) {
 	const spec = "bold brightyellow"
 
 	// "today" label centered over the marker on the label row. Clamp both
-	// edges so it always fits, then clear the area earliest to eliminate
-	// any remnants from a partially-overwritten tick label.
+	// edges so it always fits, then clear the area first to eliminate any
+	// remnants from a partially-overwritten tick label.
 	const label = "today"
 	start := col - len(label)/2
 	if start < 0 {
@@ -381,7 +386,8 @@ func (t *Timeline) drawEventLabel(cv *canvas, row, col int, ev Event, spec strin
 	}
 }
 
-// formatRange produces the dim caption above the axis, e.g.
+// formatRange produces the dim caption above the axis: the two dates and the
+// span between them.
 func formatRange(s, e time.Time) string {
 	f := "Jan 2, 2006"
 	if e.Sub(s) < 48*time.Hour {
